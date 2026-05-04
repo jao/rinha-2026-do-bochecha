@@ -1,0 +1,7 @@
+{
+  "participants": ["JP Camargo"],
+  "social": [],
+  "source-code-repo": "https://github.com/jpcamargo/rinha-de-backend-2026",
+  "stack": ["go", "qdrant", "nginx"],
+  "open_to_work": false
+}
