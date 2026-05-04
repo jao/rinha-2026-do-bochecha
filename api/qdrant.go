@@ -9,7 +9,10 @@ import (
 	"time"
 )
 
-const collectionName = "tx"
+const (
+	collectionName = "tx"
+	totalExpected  = 3_000_000
+)
 
 type QdrantClient struct {
 	baseURL string
@@ -53,9 +56,6 @@ func (q *QdrantClient) createCollection() error {
 		"vectors": map[string]any{
 			"size":     14,
 			"distance": "Euclid",
-			// float32 originals live on disk (~168 MB file, mmap'd).
-			// Only the int8 quantized copy (42 MB) stays in RAM.
-			// Queries use rescore:false so the float32 file is never read.
 			"on_disk": true,
 		},
 		"quantization_config": map[string]any{
@@ -77,9 +77,9 @@ func (q *QdrantClient) createCollection() error {
 }
 
 type QdrantPoint struct {
-	ID      uint64         `json:"id"`
-	Vector  []float32      `json:"vector"`
-	Payload map[string]any `json:"payload"`
+	ID     uint64    `json:"id"`
+	Vector []float32 `json:"vector"`
+	// No payload — fraud label is encoded in bit 0 of the ID.
 }
 
 func (q *QdrantClient) upsert(points []QdrantPoint) error {
@@ -111,12 +111,12 @@ func (q *QdrantClient) search(vector [14]float32) (fraudCount int, err error) {
 	body := map[string]any{
 		"vector":       vector[:],
 		"limit":        5,
-		"with_payload": true,
+		"with_payload": false, // fraud label is in bit 0 of the ID, no payload needed
 		"params": map[string]any{
 			"hnsw_ef": 64,
 			"exact":   false,
 			"quantization": map[string]any{
-				"rescore": false, // use int8 only; never read float32 from disk
+				"rescore": true,
 			},
 		},
 	}
@@ -142,9 +142,7 @@ func (q *QdrantClient) search(vector [14]float32) (fraudCount int, err error) {
 
 	var result struct {
 		Result []struct {
-			Payload struct {
-				IsFraud bool `json:"is_fraud"`
-			} `json:"payload"`
+			ID uint64 `json:"id"`
 		} `json:"result"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -152,7 +150,7 @@ func (q *QdrantClient) search(vector [14]float32) (fraudCount int, err error) {
 	}
 
 	for _, hit := range result.Result {
-		if hit.Payload.IsFraud {
+		if hit.ID&1 == 1 { // bit 0 set = fraud
 			fraudCount++
 		}
 	}

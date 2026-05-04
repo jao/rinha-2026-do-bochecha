@@ -15,37 +15,33 @@ services:
           memory: "20MB"
 
   qdrant:
-    image: qdrant/qdrant:v1.13.4
+    build: ./qdrant
     deploy:
       resources:
         limits:
           cpus: "0.50"
-          memory: "250MB"
+          memory: "200MB"
 
   api1:
     build: ./api
     environment:
       - QDRANT_HOST=qdrant
-      - IS_LOADER=true
-      - REFERENCES_PATH=/data/references.json.gz
     depends_on:
       - qdrant
     deploy:
       resources:
         limits:
           cpus: "0.225"
-          memory: "55MB"
+          memory: "50MB"
 
   api2:
     build: ./api
     environment:
       - QDRANT_HOST=qdrant
-      - IS_LOADER=false
-      - REFERENCES_PATH=/data/references.json.gz
     depends_on:
       - qdrant
     deploy:
       resources:
         limits:
           cpus: "0.225"
-          memory: "25MB"
+          memory: "50MB"

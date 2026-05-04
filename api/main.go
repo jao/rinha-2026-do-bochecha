@@ -5,40 +5,19 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"sync/atomic"
 )
-
-var isReady atomic.Bool
 
 func main() {
 	qdrantHost := os.Getenv("QDRANT_HOST")
 	if qdrantHost == "" {
 		qdrantHost = "qdrant"
 	}
-	isLoader := os.Getenv("IS_LOADER") == "true"
-	refPath := os.Getenv("REFERENCES_PATH")
-	if refPath == "" {
-		refPath = "/data/references.json.gz"
-	}
 
 	q := newQdrantClient(qdrantHost)
 	q.waitUntilUp()
-	log.Println("Qdrant is up")
-
-	go func() {
-		if isLoader {
-			if err := q.createCollection(); err != nil {
-				log.Printf("createCollection (may already exist): %v", err)
-			}
-			if err := loadReferences(q, refPath); err != nil {
-				log.Fatalf("loadReferences: %v", err)
-			}
-		} else {
-			q.waitUntilLoaded()
-		}
-		isReady.Store(true)
-		log.Println("API ready")
-	}()
+	log.Println("qdrant is up")
+	q.waitUntilLoaded()
+	log.Println("API ready")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /ready", handleReady(q))
@@ -49,7 +28,6 @@ func main() {
 
 func handleReady(q *QdrantClient) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Check actual point count so both instances agree on readiness.
 		count, err := q.pointCount()
 		if err == nil && count >= totalExpected {
 			w.WriteHeader(http.StatusOK)
@@ -70,7 +48,6 @@ func handleFraudScore(q *QdrantClient) http.HandlerFunc {
 		vec := vectorize(&req)
 		fraudCount, err := q.search(vec)
 		if err != nil {
-			// Avoid HTTP 500 (weight 5); take FP hit (weight 1) instead.
 			writeJSON(w, fraudResponse{Approved: true, FraudScore: 0})
 			return
 		}
