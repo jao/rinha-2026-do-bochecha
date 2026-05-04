@@ -8,6 +8,8 @@ services:
     depends_on:
       - api1
       - api2
+    networks:
+      - rinha-net
     deploy:
       resources:
         limits:
@@ -16,7 +18,8 @@ services:
 
   qdrant:
     image: jpcamargo/rinha-qdrant:latest
-    pull_policy: always
+    networks:
+      - rinha-net
     deploy:
       resources:
         limits:
@@ -25,11 +28,12 @@ services:
 
   api1:
     image: jpcamargo/rinha-api:latest
-    pull_policy: always
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
       - qdrant
+    networks:
+      - rinha-net
     deploy:
       resources:
         limits:
@@ -38,13 +42,18 @@ services:
 
   api2:
     image: jpcamargo/rinha-api:latest
-    pull_policy: always
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
       - qdrant
+    networks:
+      - rinha-net
     deploy:
       resources:
         limits:
           cpus: "0.225"
           memory: "50MB"
+
+networks:
+  rinha-net:
+    driver: bridge
