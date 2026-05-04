@@ -15,7 +15,7 @@ services:
           memory: "20MB"
 
   qdrant:
-    build: ./qdrant
+    image: jpcamargo/rinha-qdrant:latest
     deploy:
       resources:
         limits:
@@ -23,7 +23,7 @@ services:
           memory: "200MB"
 
   api1:
-    build: ./api
+    image: jpcamargo/rinha-api:latest
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
@@ -35,7 +35,7 @@ services:
           memory: "50MB"
 
   api2:
-    build: ./api
+    image: jpcamargo/rinha-api:latest
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
