@@ -16,7 +16,7 @@ services:
           memory: "20MB"
 
   qdrant:
-    image: jpcamargo/rinha-qdrant:v2
+    image: ghcr.io/jao/rinha-qdrant:latest
     platform: linux/amd64
     deploy:
       resources:
@@ -25,7 +25,7 @@ services:
           memory: "200MB"
 
   api1:
-    image: jpcamargo/rinha-api:v2
+    image: ghcr.io/jao/rinha-api:latest
     platform: linux/amd64
     environment:
       - QDRANT_HOST=qdrant
@@ -38,7 +38,7 @@ services:
           memory: "50MB"
 
   api2:
-    image: jpcamargo/rinha-api:v2
+    image: ghcr.io/jao/rinha-api:latest
     platform: linux/amd64
     environment:
       - QDRANT_HOST=qdrant
