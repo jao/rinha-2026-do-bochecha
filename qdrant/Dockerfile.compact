@@ -1,0 +1,10 @@
+FROM --platform=linux/amd64 jpcamargo/rinha-qdrant:latest AS source
+
+# Use alpine to strip WAL files (safe after clean shutdown — segments are fully flushed)
+FROM alpine:3.21 AS cleaner
+COPY --from=source /qdrant/storage /qdrant/storage
+# Delete WAL segment files but keep dirs — Qdrant requires the dirs to exist on startup
+RUN find /qdrant/storage -path "*/wal/*" -type f -delete 2>/dev/null || true
+
+FROM --platform=linux/amd64 qdrant/qdrant:v1.13.4
+COPY --from=cleaner /qdrant/storage /qdrant/storage

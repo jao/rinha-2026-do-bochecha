@@ -1,10 +1,11 @@
 services:
   nginx:
     image: nginx:alpine
+    platform: linux/amd64
     ports:
       - "9999:9999"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - api1
       - api2
@@ -15,7 +16,8 @@ services:
           memory: "20MB"
 
   qdrant:
-    build: ./qdrant
+    image: ghcr.io/jao/rinha-qdrant:latest
+    platform: linux/amd64
     deploy:
       resources:
         limits:
@@ -23,7 +25,8 @@ services:
           memory: "200MB"
 
   api1:
-    build: ./api
+    image: ghcr.io/jao/rinha-api:latest
+    platform: linux/amd64
     environment:
       - QDRANT_HOST=qdrant
     depends_on:
@@ -35,7 +38,8 @@ services:
           memory: "50MB"
 
   api2:
-    build: ./api
+    image: ghcr.io/jao/rinha-api:latest
+    platform: linux/amd64
     environment:
       - QDRANT_HOST=qdrant
     depends_on:

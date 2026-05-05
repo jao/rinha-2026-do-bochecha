@@ -1,0 +1,7 @@
+# Re-wrap the pre-baked storage from the arm64 build into an amd64 base image.
+# Storage format (IEEE 754 float32, HNSW uint32 indices) is little-endian on
+# both ARM64 and x86_64, so the files are directly compatible.
+FROM jpcamargo/rinha-qdrant:latest AS storage
+
+FROM --platform=linux/amd64 qdrant/qdrant:v1.13.4
+COPY --from=storage /qdrant/storage /qdrant/storage
